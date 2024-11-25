@@ -401,6 +401,48 @@ bmap(struct inode *ip, uint bn)
     return addr;
   }
 
+  // 添加二级索引
+  bn -= NINDIRECT;
+  if(bn < DNINDIRECT){
+    // Load indirect block, allocating if necessary.
+    if((addr = ip->addrs[NDIRECT + 1]) == 0){
+      // 分配一个一级间接块
+      addr = balloc(ip->dev);
+      if(addr == 0)
+        return 0;
+      // 将最后的二级索引指针指向刚刚分配的间接块
+      ip->addrs[NDIRECT + 1] = addr;
+    }
+
+    // 取到间接指针指向的block
+    bp = bread(ip->dev, addr);
+    // 得到缓冲区的数据部分
+    a = (uint*)bp->data;
+    // 如果对应的指针区没有指针指向合法的数据区
+    if((addr = a[bn / NINDIRECT]) == 0){
+      // 分配一个二级间接块
+      addr = balloc(ip->dev);
+      if(addr == 0)
+        return 0;
+      // 将对应的二级间接索引指向的一级间接索引指向刚刚分配的间接块
+      a[bn / NINDIRECT] = addr;
+      log_write(bp);
+    }
+    brelse(bp);
+
+    bp = bread(ip->dev,addr);
+    a = (uint*)bp->data;
+    if((addr = a[bn % NINDIRECT]) == 0){
+      addr = balloc(ip->dev);
+      if(addr){
+        a[bn % NINDIRECT] = addr;
+        log_write(bp);
+      }
+    }
+    brelse(bp);
+    return addr;
+  }
+
   panic("bmap: out of range");
 }
 
@@ -426,6 +468,31 @@ itrunc(struct inode *ip)
     for(j = 0; j < NINDIRECT; j++){
       if(a[j])
         bfree(ip->dev, a[j]);
+    }
+    brelse(bp);
+    bfree(ip->dev, ip->addrs[NDIRECT]);
+    ip->addrs[NDIRECT] = 0;
+  }
+
+  // 增加二级指针
+  int k;
+  struct buf *bp2;
+  uint *b;
+  if(ip->addrs[NDIRECT + 1]){
+    bp = bread(ip->dev, ip->addrs[NDIRECT + 1]);
+    a = (uint*)bp->data;
+    for(j = 0; j < NINDIRECT; j++){
+      if(a[j]){
+        bp2 = bread(ip->dev, a[j]);
+        b = (uint*)bp2->data;
+        for(k = 0; k < NINDIRECT; k++){
+          if(b[k])
+            bfree(ip->dev, b[k]);
+        }
+        brelse(bp2);
+        bfree(ip->dev, a[j]);
+        a[j] = 0;
+      }
     }
     brelse(bp);
     bfree(ip->dev, ip->addrs[NDIRECT]);
