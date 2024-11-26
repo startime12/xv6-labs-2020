@@ -403,7 +403,7 @@ bmap(struct inode *ip, uint bn)
 
   // 添加二级索引
   bn -= NINDIRECT;
-  if(bn < DNINDIRECT){
+  if(bn < NDINDIRECT){
     // Load indirect block, allocating if necessary.
     if((addr = ip->addrs[NDIRECT + 1]) == 0){
       // 分配一个一级间接块

@@ -15,5 +15,6 @@
 #define NBUF         (MAXOPBLOCKS*3)  // size of disk block cache
 #define FSSIZE       200000  // size of file system in blocks
 #define MAXPATH      128   // maximum file path name
+#define MAX_SYMLINK_DEPTH 10 //  如果链接的深度达到某个阈值（例如10），则返回错误代码。
 
 

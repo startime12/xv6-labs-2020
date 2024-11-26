@@ -122,26 +122,35 @@ sys_link(void)
   char name[DIRSIZ], new[MAXPATH], old[MAXPATH];
   struct inode *dp, *ip;
 
+  // 取出old和new两个变量
   if(argstr(0, old, MAXPATH) < 0 || argstr(1, new, MAXPATH) < 0)
     return -1;
 
+  // 操作开始
   begin_op();
+  // 如果根据给定的路径名old在文件系统中查找对应的inode == 0
   if((ip = namei(old)) == 0){
     end_op();
     return -1;
   }
 
+  // 锁住 确保在对inode进行修改时，不会有其他进程同时修改它
   ilock(ip);
+  // old是一个目录
   if(ip->type == T_DIR){
+    // 解锁并释放
     iunlockput(ip);
     end_op();
     return -1;
   }
 
   ip->nlink++;
+  // 将inode的修改写回到磁盘
   iupdate(ip);
+  // 解锁
   iunlock(ip);
 
+  // 查找new路径的父目录和最终路径元素
   if((dp = nameiparent(new, name)) == 0)
     goto bad;
   ilock(dp);
@@ -163,6 +172,46 @@ bad:
   iunlockput(ip);
   end_op();
   return -1;
+}
+
+// sys_symlink 软链接实现
+// 先声明一下create函数
+static struct inode* create(char *path, short type, short major, short minor);
+uint64
+sys_symlink(void)
+{
+  char target[MAXPATH], path[MAXPATH];
+  struct inode *ip;
+
+  if(argstr(0, target, MAXPATH) < 0 || argstr(1, path, MAXPATH) < 0)
+    return -1;
+
+  begin_op();
+
+  // 不能查找！
+  // 如果根据给定的路径名old在文件系统中查找对应的inode == 0
+  // if((ip = namei(target)) == 0){
+  //   end_op();
+  //   return -1;
+  // }
+
+  ip = create(path, T_SYMLINK, 0, 0);
+  if(ip == 0){
+    end_op();
+    return -1;
+  }
+
+  // !不能lock，lock就出错了
+  // ilock(ip);
+  // 不能是writei(ip, 0, (uint64)target, 0, strlen(target))
+  if(writei(ip, 0, (uint64)target, 0, MAXPATH) != MAXPATH){
+    iunlockput(ip);
+    end_op();
+    return -1;
+  }
+  iunlockput(ip);
+  end_op();
+  return 0;
 }
 
 // Is the directory dp empty except for "." and ".." ?
@@ -296,7 +345,7 @@ sys_open(void)
     return -1;
 
   begin_op();
-
+      
   if(omode & O_CREATE){
     ip = create(path, T_FILE, 0, 0);
     if(ip == 0){
@@ -310,6 +359,35 @@ sys_open(void)
     }
     ilock(ip);
     if(ip->type == T_DIR && omode != O_RDONLY){
+      iunlockput(ip);
+      end_op();
+      return -1;
+    }
+  }
+
+  if(ip->type == T_SYMLINK && !(omode & O_NOFOLLOW)){
+    // 因为前面已经取过一次ip了，所以需要使用++i
+    for(int i = 0; i < MAX_SYMLINK_DEPTH; ++i) {
+      // memset(path, 0, sizeof(path));
+      // 读出软链接路径
+      if(readi(ip, 0, (uint64)path, 0, MAXPATH) != MAXPATH){
+        iunlockput(ip);
+        end_op();
+        return -1;
+      }
+      iunlockput(ip);
+      // 根据软链接路径寻找文件inode
+      if((ip = namei(path)) == 0){
+        end_op();
+        return -1;
+      }
+      ilock(ip);
+      // 找到了最终的非软链接文件
+      if(ip->type != T_SYMLINK)
+        break;
+    }
+    // 超出软链接最大深度
+    if(ip->type == T_SYMLINK){
       iunlockput(ip);
       end_op();
       return -1;
