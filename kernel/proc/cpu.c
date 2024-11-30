@@ -5,10 +5,13 @@ static cpu_t cpus[NCPU];
 
 cpu_t* mycpu(void)
 {
-
+    int id = mycpuid();
+    struct cpu *c = &cpus[id];
+    return c;
 }
 
 int mycpuid(void) 
 {
-
+    int id = r_tp();
+    return id;
 }
