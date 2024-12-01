@@ -20,6 +20,18 @@ typedef enum {false = 0, true = 1} bool;
 #define NULL ((void*)0)
 #endif
 
-#define NCPU 2
+// OS 全局变量
+
+#define NCPU 2         // 最大CPU数量    
+#define PGSIZE 4096    // 物理页大小
+
+
+// 帮助
+
+#define MAX(a,b) ((a) > (b) ? (a) : (b)) // 取大
+#define MIN(a,b) ((a) < (b) ? (a) : (b)) // 取小
+
+#define ALIGN_UP(addr,refer) (((addr) + (refer) - 1) & ~((refer) - 1)) // 向上对齐
+#define ALIGN_DOWN(addr,refer) ((addr) & ~((refer) - 1)) // 向下对齐
 
 #endif

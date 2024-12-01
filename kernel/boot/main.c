@@ -1,38 +1,62 @@
+#include "mem/pmem.h"
 #include "riscv.h"
+#include "memlayout.h"
 #include "lib/print.h"
-#include "lib/lock.h"
+#include "lib/str.h"
 
-// 在计算机体系结构中，缓存一致性是指最终存储在多个本地缓存中的共享数据的一致性。当多个客户端都维护同一个内存资源的缓存时，就可能出现数据不一致的问题。这种情况在多CPU并行系统中尤其常见。
 volatile static int started = 0;
 
-volatile static int sum = 0; // cpu 1 report: sum = 1013713 cpu 0 report: sum = 1362458
-// static int sum = 0; // cpu 1 report: sum = 1000000 cpu 0 report: sum = 1000000
-// int sum = 0; // cpu 1 report: sum = 1000000 cpu 0 report: sum = 1000000
+volatile static int over_1 = 0, over_2 = 0;
 
-// 锁的粒度指的是锁定代码块的大小。
-// 锁的粒度越细，锁定的代码越少，系统的并发度越高，但同时需要更频繁地获取和释放锁，这可能会增加锁的争用。
-// 锁的粒度越粗，锁定的代码越多，系统的并发度越低，但可以减少锁争用，减少上下文切换和调度开销。
+static int* mem[1024];
 
 int main()
 {
     int cpuid = r_tp();
+
     if(cpuid == 0) {
+
         print_init();
-        printf("cpu %d is booting!\n", cpuid);      
+        pmem_init();
+
+        printf("cpu %d is booting!\n", cpuid);
         __sync_synchronize();
         started = 1;
-        for(int i = 0; i < 1000000; i++)
-            __sync_fetch_and_add(&sum, 1);
-            // sum++;
-        printf("cpu %d report: sum = %d\n", cpuid, sum);
+
+        for(int i = 0; i < 512; i++) {
+            mem[i] = pmem_alloc(true);
+            memset(mem[i], 1, PGSIZE);
+            printf("mem = %p, data = %d\n", mem[i], mem[i][0]);
+        }
+        printf("cpu %d alloc over\n", cpuid);
+        over_1 = 1;
+        
+        while(over_1 == 0 || over_2 == 0);
+        
+        for(int i = 0; i < 512; i++)
+            pmem_free((uint64)mem[i], true);
+        printf("cpu %d free over\n", cpuid);
+
     } else {
+
         while(started == 0);
         __sync_synchronize();
         printf("cpu %d is booting!\n", cpuid);
-        for(int i = 0; i < 1000000; i++)
-            __sync_fetch_and_add(&sum, 1);
-            // sum++;
-        printf("cpu %d report: sum = %d\n", cpuid, sum);
-    }   
-    while (1);
-}  
+        
+        for(int i = 512; i < 1024; i++) {
+            mem[i] = pmem_alloc(true);
+            memset(mem[i], 1, PGSIZE);
+            printf("mem = %p, data = %d\n", mem[i], mem[i][0]);
+        }
+        printf("cpu %d alloc over\n", cpuid);
+        over_2 = 1;
+
+        while(over_1 == 0 || over_2 == 0);
+
+        for(int i = 512; i < 1024; i++)
+            pmem_free((uint64)mem[i], true);
+        printf("cpu %d free over\n", cpuid);        
+ 
+    }
+    while (1);    
+}
