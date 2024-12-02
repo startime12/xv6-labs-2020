@@ -9,10 +9,6 @@
 #define UART_BASE  0x10000000ul
 #define UART_IRQ   10
 
-// UART
-#define UART_BASE  0x10000000ul
-#define UART_IRQ   10
-
 // platform-level interrupt controller(PLIC)
 #define PLIC_BASE 0x0c000000ul
 #define PLIC_PRIORITY(id) (PLIC_BASE + (id) * 4)

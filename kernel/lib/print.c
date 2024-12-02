@@ -18,7 +18,7 @@ void print_init(void)
 }
 
 void consputc(int c){
-    // 如果是退格键，用空格覆盖 '1|' -> '|1' -> ' |' -> '| '  
+    // 如果是退格键，用空格覆盖 '1|' -> '|1' -> ' |' -> '| '
     if(c == BACKSPACE){
         uart_putc_sync('\b');
         uart_putc_sync(' ');
