@@ -29,7 +29,7 @@ pte_t* vm_getpte(pgtbl_t pgtbl, uint64 va, bool alloc)
         }else{
             // pmem_alloc 返回一个 page_node_t *类型
             // 即返回一个指针，这个指针指向一个 page_node_t（一个指针 64位）
-            if(alloc && (pgtbl = (pgtbl_t)pmem_alloc(false)) != 0){
+            if(alloc && (pgtbl = (pgtbl_t)pmem_alloc(true)) != 0){
                 memset(pgtbl, 0, PGSIZE);
                 // 将pte地址所在处填充修改
                 *pte = PA_TO_PTE(pgtbl) | PTE_V;
