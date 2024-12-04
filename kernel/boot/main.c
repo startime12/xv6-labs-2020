@@ -35,5 +35,6 @@ int main()
         kvm_inithart();
         trap_kernel_inithart();
     }
+    intr_on();
     while (1);    
 }

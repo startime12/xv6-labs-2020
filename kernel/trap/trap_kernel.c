@@ -54,25 +54,40 @@ extern void kernel_vector();
 // 初始化trap中全局共享的东西
 void trap_kernel_init()
 {
-
+    plic_init();
 }
 
 // 各个核心trap初始化
 void trap_kernel_inithart()
 {
-
+    plic_inithart();
+    // 将时钟中断处理程序的入口地址写入 stvec 寄存器 (supervisor模式)
+    w_stvec((uint64)kernel_vector);
 }
 
 // 外设中断处理 (基于PLIC)
 void external_interrupt_handler()
 {
-
+    // 获取中断号
+    int irq = plic_claim();
+    if(irq == UART_IRQ) uart_intr();
+    else if(irq) printf("unexpected interrupt irq=%d\n", irq);
+    // 中断已完成
+    if(irq) plic_complete(irq);
 }
 
 // 时钟中断处理 (基于CLINT)
 void timer_interrupt_handler()
-{
+{  
+    // 为什么这里不用 获取中断号？因为中断号是基于plic的
+    if(mycpuid() == 0){
+        timer_update();
+        // printf("cpu %d: di da\n",r_tp());
+        // printf("ticks = %d\n",timer_get_ticks());
+    }
 
+    // 清除 sip 寄存器中的SSIP位（第1位）来确认软件中断
+    w_sip(r_sip() & ~2);
 }
 
 // 在kernel_vector()里面调用
@@ -91,4 +106,29 @@ void trap_kernel_handler()
     int trap_id = scause & 0xf; 
 
     // 中断异常处理核心逻辑
+    if(scause & 0x8000000000000000L){
+        switch (trap_id)
+        {
+        case 1: // 时钟中断
+            timer_interrupt_handler();
+            break;
+        case 9: // 外部中断
+            external_interrupt_handler();
+            break;
+        default:
+            printf("%s\n",interrupt_info[trap_id]);
+            break;
+        }
+    }else{
+        // 异常
+        printf("%s\n",exception_info[trap_id]);
+        printf("scause %p\n", scause);
+        printf("stval %p\n", stval);
+        printf("sepc=%p stval=%p\n", r_sepc(), r_stval());
+        panic("kerneltrap");
+    }
+
+    // 后面会用到
+    w_sepc(sepc);
+    w_sstatus(sstatus);
 }
