@@ -78,12 +78,13 @@ void external_interrupt_handler()
 
 // 时钟中断处理 (基于CLINT)
 void timer_interrupt_handler()
-{  
+{
     // 为什么这里不用 获取中断号？因为中断号是基于plic的
     if(mycpuid() == 0){
+        // 系统时钟的更新只需要单个CPU去做即可
         timer_update();
         // printf("cpu %d: di da\n",r_tp());
-        printf("ticks = %d\n",timer_get_ticks());
+        // printf("ticks = %d\n",timer_get_ticks());
     }
 
     // 清除 sip 寄存器中的SSIP位（第1位）来确认软件中断
@@ -115,7 +116,7 @@ void trap_kernel_handler()
         case 9: // 外部中断
             external_interrupt_handler();
             break;
-        default:
+        default: // 其他中断
             printf("%s\n",interrupt_info[trap_id]);
             break;
         }

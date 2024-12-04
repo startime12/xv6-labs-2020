@@ -17,6 +17,7 @@ static uint64 mscratch[NCPU][5];
 void timer_init()
 {   
     uint64 cpuid = r_mhartid();
+    // 更改INTERVAL的值来更改系统时钟更新的速度
     *(uint64*)CLINT_MTIMECMP(cpuid) = *(uint64*)CLINT_MTIME + INTERVAL;
     // scratch[0]、scratch[1]和scratch[2]用于保存a0、a1和a2寄存器的值
     // scratch[3]用于存储CLINT_MTIMECMP寄存器的地址
