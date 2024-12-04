@@ -21,15 +21,10 @@ void timer_init()
     // scratch[0]、scratch[1]和scratch[2]用于保存a0、a1和a2寄存器的值
     // scratch[3]用于存储CLINT_MTIMECMP寄存器的地址
     // scratch[4]用于存储期望的时钟中断间隔（interval）
-
-    // mscratch[cpuid][3] = CLINT_MTIMECMP(cpuid);
-    // mscratch[cpuid][4] = INTERVAL;
-    // w_mscratch((uint64)mscratch[cpuid]);
-    uint64 *scratch = &mscratch[cpuid][0];
-    scratch[3] = CLINT_MTIMECMP(cpuid);
-    scratch[4] = INTERVAL;
+    mscratch[cpuid][3] = CLINT_MTIMECMP(cpuid);
+    mscratch[cpuid][4] = INTERVAL;
     // 将scratch写入MSR寄存器 mscratch
-    w_mscratch((uint64)scratch);
+    w_mscratch((uint64)mscratch[cpuid]);
 
     // mtvec寄存器 Machine Trap-Vector Base-Address Register，用于设置中断入口地址
     // 将时钟中断处理程序的入口地址写入 mtvec 寄存器 (机器模式)

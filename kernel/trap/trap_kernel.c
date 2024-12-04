@@ -83,7 +83,7 @@ void timer_interrupt_handler()
     if(mycpuid() == 0){
         timer_update();
         // printf("cpu %d: di da\n",r_tp());
-        // printf("ticks = %d\n",timer_get_ticks());
+        printf("ticks = %d\n",timer_get_ticks());
     }
 
     // 清除 sip 寄存器中的SSIP位（第1位）来确认软件中断
