@@ -7,8 +7,9 @@
 #include "riscv.h"
 #include "memlayout.h"
 
-static pgtbl_t kernel_pgtbl; // 内核页表
+extern char trampoline[]; // in trampoline.S
 
+static pgtbl_t kernel_pgtbl; // 内核页表
 
 // 根据pagetable,找到va对应的pte
 // 若设置alloc=true 则在PTE无效时尝试申请一个物理页
@@ -85,7 +86,7 @@ void vm_unmappages(pgtbl_t pgtbl, uint64 va, uint64 len, bool freeit)
     }
 }
 
-// 完成 UART CLINT PLIC 内核代码区 内核数据区 可分配区域 的映射
+// 完成 UART CLINT PLIC 内核代码区 内核数据区 可分配区域 trampoline kstack 的映射
 // 相当于填充kernel_pgtbl
 void kvm_init()
 {
@@ -99,6 +100,11 @@ void kvm_init()
     vm_mappages(kernel_pgtbl, KERNEL_BASE, KERNEL_BASE, (uint64)KERNEL_DATA-KERNEL_BASE, PTE_R | PTE_X);
     vm_mappages(kernel_pgtbl, (uint64)KERNEL_DATA, (uint64)KERNEL_DATA, (uint64)ALLOC_BEGIN-(uint64)KERNEL_DATA, PTE_R | PTE_W);
     vm_mappages(kernel_pgtbl, (uint64)ALLOC_BEGIN, (uint64)ALLOC_BEGIN, (uint64)ALLOC_END - (uint64)ALLOC_BEGIN, PTE_R | PTE_W);
+    vm_mappages(kernel_pgtbl, TRAMPOLINE, (uint64)trampoline, PGSIZE, PTE_R | PTE_X);
+    
+    // 映射kstack，每个进程有自己的kstack，目前只有一个进程，只映射KSTACK(1)
+    // 内核页表其他部分所有进程共用
+    vm_mappages(kernel_pgtbl, KSTACK(1), (uint64)pmem_alloc(true), PGSIZE, PTE_R | PTE_W);
 }
 
 // 使用新的页表，刷新TLB

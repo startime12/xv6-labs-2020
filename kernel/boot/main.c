@@ -3,6 +3,7 @@
 #include "lib/str.h"
 #include "mem/pmem.h"
 #include "mem/vmem.h"
+#include "proc/proc.h"
 #include "trap/trap.h"
 
 volatile static int started = 0;
@@ -22,19 +23,18 @@ int main()
         trap_kernel_init();
         trap_kernel_inithart();
 
+        proc_make_first();
+        
         __sync_synchronize();
-        started = 1;
+        // started = 1;
 
     } else {
 
         while(started == 0);
-        
         __sync_synchronize();
         printf("cpu %d is booting!\n", cpuid);
-
         kvm_inithart();
         trap_kernel_inithart();
     }
-    intr_on();
     while (1);    
 }

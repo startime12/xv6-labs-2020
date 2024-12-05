@@ -53,7 +53,7 @@ void* pmem_alloc(bool in_kernel)
         region->list_head.next = page_node->next;
         region->allocable--;
         spinlock_release(&region->lk);
-        memset((void *)page_node, 0, PGSIZE);
+        memset((void *)page_node, 0, PGSIZE); // 干净的物理页
         return (void *)page_node;
     }else{
         panic("pmem_alloc error");

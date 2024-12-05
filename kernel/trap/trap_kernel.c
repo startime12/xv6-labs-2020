@@ -8,7 +8,7 @@
 #include "riscv.h"
 
 // 中断信息
-static char* interrupt_info[16] = {
+char* interrupt_info[16] = {
     "U-mode software interrupt",      // 0
     "S-mode software interrupt",      // 1
     "reserved-1",                     // 2
@@ -28,7 +28,7 @@ static char* interrupt_info[16] = {
 };
 
 // 异常信息
-static char* exception_info[16] = {
+char* exception_info[16] = {
     "Instruction address misaligned", // 0
     "Instruction access fault",       // 1
     "Illegal instruction",            // 2
@@ -61,7 +61,7 @@ void trap_kernel_init()
 void trap_kernel_inithart()
 {
     plic_inithart();
-    // 将时钟中断处理程序的入口地址写入 stvec 寄存器 (supervisor模式)
+    // 将内核中断处理流程的入口地址写入 stvec 寄存器 (supervisor模式)
     w_stvec((uint64)kernel_vector);
 }
 
