@@ -2,6 +2,8 @@
 #ifndef __MEMLAYOUT_H__
 #define __MEMLAYOUT_H__
 
+#include "common.h"
+
 // 内核基地址
 #define KERNEL_BASE 0x80000000ul
 
@@ -40,5 +42,15 @@
 
 // 定义各个进程的内核栈的虚拟地址(间隔分布)
 #define KSTACK(id) (TRAPFRAME - ((id) + 1) * 2 * PGSIZE)
+
+
+// 用户地址空间的mmap区域位于stack和heap之间
+// 目前限定它占32MB(8096个page) [MMAP_BEGIN, MMAP_END)
+
+// 映射区域的终点(给 ustack 留 32 个 page 的空间)
+#define MMAP_END  (TRAPFRAME - 32 * PGSIZE) 
+
+// 映射区域的起点
+#define MMAP_BEGIN  (MMAP_END - 8096 * PGSIZE)
 
 #endif

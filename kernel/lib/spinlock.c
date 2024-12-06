@@ -35,7 +35,7 @@ void pop_off(void)
 // 中断应当是关闭的
 bool spinlock_holding(spinlock_t *lk)
 { 
-    return (lk->locked && lk->cpuid == mycpuid());
+    return (lk->locked && (lk->cpuid == mycpuid()));
 }
 
 // 自选锁初始化
@@ -72,7 +72,8 @@ void spinlock_release(spinlock_t *lk)
     if(!spinlock_holding(lk))
         panic("release");
 
-    lk->cpuid = 0;
+    // 注意：释放自旋锁要将cpuid设为一个正常cpuid不会使用的数字
+    lk->cpuid = -1;
 
     __sync_synchronize();
 

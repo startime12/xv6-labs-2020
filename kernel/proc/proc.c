@@ -5,6 +5,7 @@
 #include "proc/cpu.h"
 #include "proc/initcode.h"
 #include "memlayout.h"
+#include "mem/mmap.h"
 
 // in trampoline.S
 extern char trampoline[];
@@ -64,7 +65,12 @@ void proc_make_first()
     vm_mappages(proczero.pgtbl, USER_BASE, page, PGSIZE, PTE_R | PTE_W | PTE_X | PTE_U);
     memmove((void *)page, initcode, initcode_len);
     // 设置 heap_top
-    proczero.heap_top = (PGSIZE << 1);
+    proczero.heap_top = USER_BASE + PGSIZE;
+    // 设置 mmap_region_t
+    proczero.mmap = mmap_region_alloc();
+    proczero.mmap->begin = MMAP_BEGIN;
+    proczero.mmap->npages = (MMAP_END - MMAP_BEGIN) / PGSIZE;
+    proczero.mmap->next = NULL;
     // tf字段设置
     proczero.tf->epc = USER_BASE; // 用户程序计数器 用户代码的起始地址
     proczero.tf->sp = TRAPFRAME; // 用户栈指针 用户栈的起始地址

@@ -4,6 +4,7 @@
 #include "mem/vmem.h"
 #include "memlayout.h"
 #include "riscv.h"
+#include "syscall/syscall.h"
 
 // in trampoline.S
 extern char trampoline[];      // 内核和用户切换的代码
@@ -59,7 +60,8 @@ void trap_user_handler()
             p->tf->epc += 4;
             // 开中断
             intr_on();
-            printf("get a syscall from proc %d\n", myproc()->pid);
+            syscall();
+            // printf("get a syscall from proc %d\n", myproc()->pid);
         }else{
             // 其他异常
             printf("%s\n",exception_info[trap_id]);

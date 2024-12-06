@@ -30,6 +30,7 @@ pte_t* vm_getpte(pgtbl_t pgtbl, uint64 va, bool alloc)
         }else{
             // pmem_alloc 返回一个 page_node_t *类型
             // 即返回一个指针，这个指针指向一个 page_node_t（一个指针 64位）
+            // 这里的pmem_alloc实际上是构建三级页表的过程
             if(alloc && (pgtbl = (pgtbl_t)pmem_alloc(true)) != 0){
                 memset(pgtbl, 0, PGSIZE);
                 // 将pte地址所在处填充修改
@@ -53,7 +54,8 @@ void vm_mappages(pgtbl_t pgtbl, uint64 va, uint64 pa, uint64 len, int perm)
     if((va % PGSIZE) != 0) panic("vm_mappages: va not aligned");
     if((pa % PGSIZE) != 0) panic("vm_mappages: pa not aligned");
     
-    start = ALIGN_DOWN(va, PGSIZE);
+    // start = ALIGN_DOWN(va, PGSIZE);
+    start = va;
     end = ALIGN_DOWN(va + len - 1, PGSIZE);
     if(!(len > 0) || !(va + len <= VA_MAX)) panic("vm_mappages: va and len not right");
     for( ; ; start+=PGSIZE, pa+=PGSIZE){
@@ -70,14 +72,16 @@ void vm_unmappages(pgtbl_t pgtbl, uint64 va, uint64 len, bool freeit)
 {
     uint64 start,end;
     pte_t* pte;
-    if(!(start = ALIGN_DOWN(va, PGSIZE)) || !(end = ALIGN_DOWN(va + len - 1, PGSIZE))){
-        panic("vm_mappages: page-aligned error");
-    }
+    if((va % PGSIZE) != 0) panic("vm_unmappages: va not aligned");
+    // start = page-aligned(va, PGSIZE); // 如果va是page-aligned，就不需要使用page-aligned
+    start = va;
+    end = va + len; // 这里千万不能使用ALIGN_DOWN
     if(!(len > 0) || !(va + len <= VA_MAX)){
-        panic("vm_mappages: va and len not right");
+        panic("vm_unmappages: va and len not right");
     }
-    for( ;start < end; start+=PGSIZE){
-        pte = vm_getpte(pgtbl,start,1);
+
+    for( ; start < end; start += PGSIZE){
+        pte = vm_getpte(pgtbl,start,0);
         if(pte == NULL) panic("vm_unmappages: not find pte");
         if((*pte & PTE_V) == 0) panic("vm_unmappages: not map");
         if(PTE_FLAGS(*pte) == PTE_V) panic("uvmunmap: not a leaf");
