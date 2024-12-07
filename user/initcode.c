@@ -1,30 +1,3 @@
-// in initcode.c
-#include "sys.h"
-
-// int main()
-// {
-//     int L[5];
-//     char* s = "hello, world"; 
-//     syscall(SYS_copyout, L);
-//     syscall(SYS_copyin, L, 5);
-//     syscall(SYS_copyinstr, s);
-//     while(1);
-//     return 0;
-// }
-
-// int main()
-// {
-//     long long heap_top = syscall(SYS_brk, 0);
-
-//     heap_top = syscall(SYS_brk, heap_top + 4096 * 10);
-
-//     heap_top = syscall(SYS_brk, heap_top - 4096 * 5);
-
-//     while(1);
-//     return 0;
-// }
-
-// // in initcode.c
 // #include "sys.h"
 
 // // 与内核保持一致
@@ -33,38 +6,78 @@
 // #define MMAP_END     (VA_MAX - 34 * PGSIZE)
 // #define MMAP_BEGIN   (MMAP_END - 8096 * PGSIZE) 
 
+// char *str1, *str2;
+
 // int main()
 // {
-//     // 建议画图理解这些地址和长度的含义
+//     syscall(SYS_print, "\nuser begin\n");
 
-//     // sys_mmap 测试 
-//     syscall(SYS_mmap, MMAP_BEGIN + 4 * PGSIZE, 3 * PGSIZE);
-//     syscall(SYS_mmap, MMAP_BEGIN + 10 * PGSIZE, 2 * PGSIZE);
-//     syscall(SYS_mmap, MMAP_BEGIN + 2 * PGSIZE,  2 * PGSIZE);
-//     syscall(SYS_mmap, MMAP_BEGIN + 12 * PGSIZE, 1 * PGSIZE);
-//     syscall(SYS_mmap, MMAP_BEGIN + 7 * PGSIZE, 3 * PGSIZE);
-//     syscall(SYS_mmap, MMAP_BEGIN, 2 * PGSIZE);
-//     syscall(SYS_mmap, 0, 10 * PGSIZE);
+//     // 测试MMAP区域
+//     str1 = (char*)syscall(SYS_mmap, MMAP_BEGIN, PGSIZE);
+    
+//     // 测试HEAP区域
+//     long long top = syscall(SYS_brk, 0);
+//     str2 = (char*)top;
+//     syscall(SYS_brk, top + PGSIZE);
 
-//     // sys_munmap 测试
-//     syscall(SYS_munmap, MMAP_BEGIN + 10 * PGSIZE, 5 * PGSIZE);
-//     syscall(SYS_munmap, MMAP_BEGIN, 10 * PGSIZE);
-//     syscall(SYS_munmap, MMAP_BEGIN + 17 * PGSIZE, 2 * PGSIZE);
-//     syscall(SYS_munmap, MMAP_BEGIN + 15 * PGSIZE, 2 * PGSIZE);
-//     syscall(SYS_munmap, MMAP_BEGIN + 19 * PGSIZE, 2 * PGSIZE);
-//     syscall(SYS_munmap, MMAP_BEGIN + 22 * PGSIZE, 1 * PGSIZE);
-//     syscall(SYS_munmap, MMAP_BEGIN + 21 * PGSIZE, 1 * PGSIZE);
+//     str1[0] = 'M';
+//     str1[1] = 'M';
+//     str1[2] = 'A';
+//     str1[3] = 'P';
+//     str1[4] = '\n';
+//     str1[5] = '\0';
+
+//     str2[0] = 'H';
+//     str2[1] = 'E';
+//     str2[2] = 'A';
+//     str2[3] = 'P';
+//     str2[4] = '\n';
+//     str2[5] = '\0';
+
+//     int pid = syscall(SYS_fork);
+
+//     if(pid == 0) { // 子进程
+//         for(int i = 0; i < 100000000; i++);
+//         syscall(SYS_print, "child: hello\n");
+//         syscall(SYS_print, str1);
+//         syscall(SYS_print, str2);
+
+//         syscall(SYS_exit, 1);
+//         syscall(SYS_print, "child: never back\n");
+//     } else {       // 父进程
+//         int exit_state;
+//         syscall(SYS_wait, &exit_state);
+//         if(exit_state == 1)
+//             syscall(SYS_print, "parent: hello\n");
+//         else
+//             syscall(SYS_print, "parent: error\n");
+//     }
 
 //     while(1);
 //     return 0;
 // }
 
-// in initcode.c
-#include "sys.h"
+// 时钟测试
+// #include "sys.h"
 
-int main()
-{
-    syscall(SYS_copy);
-    while (1);
-    return 0;
-}
+// int main()
+// {
+//     syscall(SYS_fork);
+//     syscall(SYS_fork);
+
+//     while(1);
+//     return 0;
+// }
+
+// sleep测试
+// #include "sys.h"
+
+// int main()
+// {
+//     int pid = syscall(SYS_fork);
+//     syscall(SYS_fork);
+//     if (pid==2)
+//         syscall(SYS_sleep, 10);
+//     while(1);
+//     return 0;
+// }

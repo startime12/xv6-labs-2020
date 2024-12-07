@@ -55,6 +55,7 @@ extern void kernel_vector();
 void trap_kernel_init()
 {
     plic_init();
+    timer_create();
 }
 
 // 各个核心trap初始化
@@ -89,6 +90,10 @@ void timer_interrupt_handler()
 
     // 清除 sip 寄存器中的SSIP位（第1位）来确认软件中断
     w_sip(r_sip() & ~2);
+
+    // 强制进程交出CPU使用权
+    if(myproc() != 0 && myproc()->state == RUNNING)
+        proc_yield();
 }
 
 // 在kernel_vector()里面调用

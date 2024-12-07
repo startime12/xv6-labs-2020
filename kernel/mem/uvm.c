@@ -22,6 +22,7 @@ static void copy_range(pgtbl_t old, pgtbl_t new, uint64 begin, uint64 end)
         pa = (uint64)PTE_TO_PA(*pte);
         flags = (int)PTE_FLAGS(*pte);
 
+        // 这里申请的是用户页表要对应的物理页
         page = (uint64)pmem_alloc(false);
         memmove((char*)page, (const char*)pa, PGSIZE);
         vm_mappages(new, va, page, PGSIZE, flags);
@@ -96,8 +97,8 @@ static void destroy_pgtbl(pgtbl_t pgtbl, uint32 level)
 // 页表销毁：trapframe 和 trampoline 单独处理
 void uvm_destroy_pgtbl(pgtbl_t pgtbl)
 {
+    // trapframe 和 trampoline页不会被释放，因为它被映射到内核的虚拟地址空间中，并且是内核运行所必需的
     vm_unmappages(pgtbl, TRAPFRAME, PGSIZE, false);
-    // trampoline页不会被释放，因为它被映射到内核的虚拟地址空间中，并且是内核运行所必需的
     vm_unmappages(pgtbl, TRAMPOLINE, PGSIZE, false);
     destroy_pgtbl(pgtbl, 3);
 }

@@ -9,7 +9,7 @@
 
 extern char trampoline[]; // in trampoline.S
 
-static pgtbl_t kernel_pgtbl; // 内核页表
+pgtbl_t kernel_pgtbl; // 内核页表
 
 // 根据pagetable,找到va对应的pte
 // 若设置alloc=true 则在PTE无效时尝试申请一个物理页
@@ -108,7 +108,7 @@ void kvm_init()
     
     // 映射kstack，每个进程有自己的kstack，目前只有一个进程，只映射KSTACK(1)
     // 内核页表其他部分所有进程共用
-    vm_mappages(kernel_pgtbl, KSTACK(1), (uint64)pmem_alloc(true), PGSIZE, PTE_R | PTE_W);
+    // vm_mappages(kernel_pgtbl, KSTACK(1), (uint64)pmem_alloc(true), PGSIZE, PTE_R | PTE_W);
 }
 
 // 使用新的页表，刷新TLB
