@@ -7,6 +7,7 @@
 #include "memlayout.h"
 #include "mem/mmap.h"
 #include "riscv.h"
+#include "fs/fs.h"
 
 
 /*----------------外部空间------------------*/
@@ -50,9 +51,14 @@ static int alloc_pid()
 // 释放锁 + 调用 trap_user_return
 static void fork_return()
 {
+    static int first = 1;
     // 由于调度器中上了锁，所以这里需要解锁
     proc_t* p = myproc();
     spinlock_release(&p->lk);
+    if (first) {
+        first = 0; // 只初始化一次
+        fs_init();
+    }
     trap_user_return();
 }
 

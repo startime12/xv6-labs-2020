@@ -23,7 +23,8 @@ typedef enum {false = 0, true = 1} bool;
 // OS 全局变量
 
 #define NCPU 2               // 最大CPU数量    
-#define NPROC 64             // 最大进程数量
+// #define NPROC 64             // 最大进程数量
+#define NPROC 6             // 最大进程数量
 
 #define PGSIZE 4096          // 物理页大小
 

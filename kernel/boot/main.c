@@ -7,7 +7,8 @@
 #include "mem/mmap.h"
 #include "proc/proc.h"
 #include "trap/trap.h"
-
+#include "fs/buf.h"
+#include "fs/fs.h"
 volatile static int started = 0;
 
 int main()
@@ -31,7 +32,7 @@ int main()
         __sync_synchronize();
         // started = 1;
     } else {
-
+        
         while(started == 0);
         __sync_synchronize();
         

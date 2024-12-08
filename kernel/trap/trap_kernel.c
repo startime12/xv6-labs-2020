@@ -6,6 +6,7 @@
 #include "proc/cpu.h"
 #include "memlayout.h"
 #include "riscv.h"
+#include "dev/vio.h"
 
 // 中断信息
 char* interrupt_info[16] = {
@@ -72,7 +73,7 @@ void external_interrupt_handler()
     // 获取中断号
     int irq = plic_claim();
     if(irq == UART_IRQ) uart_intr();
-    else if (irq == VIRTIO_IRQ) virtio_disk_intr();
+    else if (irq == VIRTIO_IRQ) virtio_disk_intr(); // 中断处理，处理完成后唤醒进程
     else if(irq) printf("unexpected interrupt irq=%d\n", irq);
     // 中断已完成
     if(irq) plic_complete(irq);
@@ -93,8 +94,8 @@ void timer_interrupt_handler()
     w_sip(r_sip() & ~2);
 
     // 强制进程交出CPU使用权
-    if(myproc() != 0 && myproc()->state == RUNNING)
-        proc_yield();
+    //if(myproc() != 0 && myproc()->state == RUNNING)
+    //   proc_yield();
 }
 
 // 在kernel_vector()里面调用

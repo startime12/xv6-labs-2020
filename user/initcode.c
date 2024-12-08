@@ -1,83 +1,64 @@
-// #include "sys.h"
+// 测试bitmap
+#include "sys.h"
+#include "type.h"
 
-// // 与内核保持一致
-// #define VA_MAX       (1ul << 38)
-// #define PGSIZE       4096
-// #define MMAP_END     (VA_MAX - 34 * PGSIZE)
-// #define MMAP_BEGIN   (MMAP_END - 8096 * PGSIZE) 
-
-// char *str1, *str2;
-
-// int main()
-// {
-//     syscall(SYS_print, "\nuser begin\n");
-
-//     // 测试MMAP区域
-//     str1 = (char*)syscall(SYS_mmap, MMAP_BEGIN, PGSIZE);
+int main()
+{
+    uint32 block_num_1 = syscall(SYS_alloc_block);
+    uint32 block_num_2 = syscall(SYS_alloc_block);
+    uint32 block_num_3 = syscall(SYS_alloc_block);
+    syscall(SYS_free_block, block_num_2);
+    syscall(SYS_free_block, block_num_1);
+    syscall(SYS_free_block, block_num_3);
     
-//     // 测试HEAP区域
-//     long long top = syscall(SYS_brk, 0);
-//     str2 = (char*)top;
-//     syscall(SYS_brk, top + PGSIZE);
+    while(1);
+    return 0;
+}
 
-//     str1[0] = 'M';
-//     str1[1] = 'M';
-//     str1[2] = 'A';
-//     str1[3] = 'P';
-//     str1[4] = '\n';
-//     str1[5] = '\0';
+// 测试buf_read,buf_write和buf_release
+// #include "sys.h"
+// #include "type.h"
 
-//     str2[0] = 'H';
-//     str2[1] = 'E';
-//     str2[2] = 'A';
-//     str2[3] = 'P';
-//     str2[4] = '\n';
-//     str2[5] = '\0';
+// int main()
+// {
+//     char buf[128];
+//     uint64 buf_in_kernel[10];
 
-//     int pid = syscall(SYS_fork);
-
-//     if(pid == 0) { // 子进程
-//         for(int i = 0; i < 100000000; i++);
-//         syscall(SYS_print, "child: hello\n");
-//         syscall(SYS_print, str1);
-//         syscall(SYS_print, str2);
-
-//         syscall(SYS_exit, 1);
-//         syscall(SYS_print, "child: never back\n");
-//     } else {       // 父进程
-//         int exit_state;
-//         syscall(SYS_wait, &exit_state);
-//         if(exit_state == 1)
-//             syscall(SYS_print, "parent: hello\n");
-//         else
-//             syscall(SYS_print, "parent: error\n");
+//     // 初始状态:读了sb并释放了buf
+//     syscall(SYS_print, "\nstate-1:");
+//     syscall(SYS_show_buf);
+    
+//     // 耗尽所有 buf
+//     for(int i = 0; i < 6; i++) {
+//         buf_in_kernel[i] = syscall(SYS_read_block, 100 + i, buf);
+//         buf[i] = 0xFF;
+//         syscall(SYS_write_block, buf_in_kernel[i], buf);
 //     }
+//     syscall(SYS_print, "\nstate-2:");
+//     syscall(SYS_show_buf);
 
-//     while(1);
-//     return 0;
-// }
+//     // 释放两个buf-4 和 buf-1，查看链的状态
+//     syscall(SYS_release_block, buf_in_kernel[3]);
+//     syscall(SYS_release_block, buf_in_kernel[0]);
+//     syscall(SYS_print, "\nstate-3:");
+//     syscall(SYS_show_buf);
 
-// 时钟测试
-// #include "sys.h"
+//     // 申请buf,测试LRU是否生效 + 测试103号block的lazy write
+//     buf_in_kernel[6] = syscall(SYS_read_block, 106, buf);
+//     buf_in_kernel[7] = syscall(SYS_read_block, 103, buf);
+//     syscall(SYS_print, "\nstate-4:");
+//     syscall(SYS_show_buf);
 
-// int main()
-// {
-//     syscall(SYS_fork);
-//     syscall(SYS_fork);
+//     // 释放所有buf
+//     syscall(SYS_release_block, buf_in_kernel[7]);
+//     syscall(SYS_release_block, buf_in_kernel[6]);
+//     syscall(SYS_release_block, buf_in_kernel[5]);
+//     syscall(SYS_release_block, buf_in_kernel[4]);
+//     syscall(SYS_release_block, buf_in_kernel[2]);
+//     syscall(SYS_release_block, buf_in_kernel[1]);
+//     syscall(SYS_print, "\nstate-5:");
+//     syscall(SYS_show_buf);
 
-//     while(1);
-//     return 0;
-// }
-
-// sleep测试
-// #include "sys.h"
-
-// int main()
-// {
-//     int pid = syscall(SYS_fork);
-//     syscall(SYS_fork);
-//     if (pid==2)
-//         syscall(SYS_sleep, 10);
 //     while(1);
 //     return 0;
 // }

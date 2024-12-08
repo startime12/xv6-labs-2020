@@ -4,7 +4,8 @@
 #include "lib/print.h"
 #include "lib/str.h"
 
-#define N_BLOCK_BUF 64
+// #define N_BLOCK_BUF 64
+#define N_BLOCK_BUF 6
 #define BLOCK_NUM_UNUSED 0xFFFFFFFF
 
 // 将buf包装成双向循环链表的node
@@ -67,17 +68,17 @@ buf_t* buf_read(uint32 block_num)
 {
     spinlock_acquire(&lk_buf_cache);
     buf_node_t *b;
-    for(b = head_buf->next; b == head_buf; b = b->next){
+    for(b = head_buf.next; b != &head_buf; b = b->next){
         if(b->buf.block_num == block_num){
             b->buf.buf_ref++;
             insert_head(b, true);
             spinlock_release(&lk_buf_cache);
             sleeplock_acquire(&b->buf.slk);
-            return b;
+            return &(b->buf);
         }
     }
     // 找空闲buf
-    b = head_buf->prev;
+    b = head_buf.prev;
     while (b->prev->buf.buf_ref == 0 && b->prev != &head_buf)
         b = b->prev;
     if (b->buf.buf_ref != 0) 
@@ -114,7 +115,7 @@ void buf_release(buf_t* buf)
 
     // 找当前buf所在的buf_node_t
     buf_node_t *b;
-    for(b = &head_buf->next; &b->buf != buf; b = b->next){}
+    for(b = head_buf.next; &b->buf != buf; b = b->next){}
     // 如果当前buf释放后为空闲
     if (buf->buf_ref == 0)
         insert_head(b, false);
