@@ -72,6 +72,7 @@ void external_interrupt_handler()
     // 获取中断号
     int irq = plic_claim();
     if(irq == UART_IRQ) uart_intr();
+    else if (irq == VIRTIO_IRQ) virtio_disk_intr();
     else if(irq) printf("unexpected interrupt irq=%d\n", irq);
     // 中断已完成
     if(irq) plic_complete(irq);

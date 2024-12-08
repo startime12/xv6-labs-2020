@@ -21,6 +21,7 @@
         "io_context": "c",
         "string_view": "c",
         "initializer_list": "c",
-        "executor": "c"
+        "executor": "c",
+        "random": "c"
     }
 }

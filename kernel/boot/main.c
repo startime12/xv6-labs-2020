@@ -1,6 +1,7 @@
 #include "riscv.h"
 #include "lib/print.h"
 #include "lib/str.h"
+#include "dev/vio.h"
 #include "mem/pmem.h"
 #include "mem/vmem.h"
 #include "mem/mmap.h"
@@ -23,6 +24,7 @@ int main()
         trap_kernel_init();
         trap_kernel_inithart();        
         mmap_init();
+        virtio_disk_init();
         proc_init();
         proc_make_first();
 

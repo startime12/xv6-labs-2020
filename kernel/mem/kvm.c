@@ -20,6 +20,8 @@ pte_t* vm_getpte(pgtbl_t pgtbl, uint64 va, bool alloc)
     // pgtbl是一个unit64类型的指针，指向一个页面，这个页面里面有很多页表项
     if( va > VA_MAX)
         panic("vm_getpte");
+    if (pgtbl == NULL)
+        pgtbl = kernel_pgtbl;
     // Page Table Entry，页表项
     for(int i = 2; i > 0; i--){
         // 指针就是一个地址！
@@ -90,7 +92,7 @@ void vm_unmappages(pgtbl_t pgtbl, uint64 va, uint64 len, bool freeit)
     }
 }
 
-// 完成 UART CLINT PLIC 内核代码区 内核数据区 可分配区域 trampoline kstack 的映射
+// 完成 UART virtio CLINT PLIC 内核代码区 内核数据区 可分配区域 trampoline kstack 的映射
 // 相当于填充kernel_pgtbl
 void kvm_init()
 {
@@ -99,6 +101,7 @@ void kvm_init()
     memset(kernel_pgtbl, 0, PGSIZE);
 
     vm_mappages(kernel_pgtbl, UART_BASE, UART_BASE, PGSIZE, PTE_R | PTE_W);
+    vm_mappages(kernel_pgtbl, VIRTIO_BASE, VIRTIO_BASE, PGSIZE, PTE_R | PTE_W);
     vm_mappages(kernel_pgtbl, CLINT_BASE, CLINT_BASE, 0x10000, PTE_R | PTE_W);
     vm_mappages(kernel_pgtbl, PLIC_BASE, PLIC_BASE, 0x400000, PTE_R | PTE_W);
     vm_mappages(kernel_pgtbl, KERNEL_BASE, KERNEL_BASE, (uint64)KERNEL_DATA-KERNEL_BASE, PTE_R | PTE_X);
