@@ -116,6 +116,9 @@ void            initlock(struct spinlock*, char*);
 void            release(struct spinlock*);
 void            push_off(void);
 void            pop_off(void);
+#ifdef LAB_FS
+void            freelock(struct spinlock*);
+#endif
 
 // sleeplock.c
 void            acquiresleep(struct sleeplock*);
@@ -185,3 +188,10 @@ void            virtio_disk_intr(void);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
+
+// stats.c
+void            statsinit(void);
+void            statsinc(void);
+
+// sprintf.c
+int             snprintf(char*, int, char*, ...);

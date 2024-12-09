@@ -37,6 +37,12 @@ OBJS = \
   $K/plic.o \
   $K/virtio_disk.o
 
+ifeq ($(LAB),fs)
+OBJS += \
+	$K/stats.o\
+	$K/sprintf.o
+endif
+
 ifeq ($(LAB),pgtbl)
 OBJS += \
 	$K/vmcopyin.o
@@ -128,6 +134,10 @@ tags: $(OBJS) _init
 
 ULIB = $U/ulib.o $U/usys.o $U/printf.o $U/umalloc.o
 
+ifeq ($(LAB),fs)
+ULIB += $U/statistics.o
+endif
+
 ifeq ($(LAB),$(filter $(LAB), pgtbl lock))
 ULIB += $U/statistics.o
 endif
@@ -176,7 +186,10 @@ UPROGS=\
 	$U/_wc\
 	$U/_zombie\
 
-
+ifeq ($(LAB),fs)
+UPROGS += \
+	$U/_stats
+endif
 
 
 ifeq ($(LAB),$(filter $(LAB), pgtbl lock))
@@ -227,7 +240,9 @@ endif
 ifeq ($(LAB),fs)
 UPROGS += \
 	$U/_bigfile\
-	$U/_symlinktest
+	$U/_symlinktest\
+	$U/_kalloctest\
+	$U/_bcachetest
 endif
 
 
@@ -265,9 +280,9 @@ QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
 ifndef CPUS
 CPUS := 3
 endif
-ifeq ($(LAB),fs)
-CPUS := 1
-endif
+# ifeq ($(LAB),fs)
+# CPUS := 1
+# endif
 
 FWDPORT = $(shell expr `id -u` % 5000 + 25999)
 

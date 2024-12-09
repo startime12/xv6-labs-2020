@@ -69,6 +69,9 @@ pipeclose(struct pipe *pi, int writable)
   if(pi->readopen == 0 && pi->writeopen == 0){
     release(&pi->lock);
     kfree((char*)pi);
+#ifdef LAB_FS
+    freelock(&pi->lock);
+#endif    
   } else
     release(&pi->lock);
 }
